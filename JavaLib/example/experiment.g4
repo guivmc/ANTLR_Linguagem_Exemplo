@@ -51,12 +51,26 @@ grammar experiment;
 
     private Map<String, Dado> variaveis = new HashMap<String, Dado>();
 
-    private boolean variableDefined(String name){
-        return variaveis.containsKey(name);
+    private boolean variableDefined(String varname){
+        return variaveis.containsKey(varname);
     }
 
-    private void defineVariable(String name, Dado dado){
-        variaveis.put(name, dado);
+    private void defineVariable(String varname, Dado dado){
+        variaveis.put(varname, dado);
+    }
+
+    private void changeValue(String varname, String value)
+    {
+        Dado toChange = this.variaveis.get(varname);
+
+        if(toChange.tipo.equals("int"))
+            toChange.valorInt = Integer.parseInt(value);
+        else if(toChange.tipo.equals("float"))
+             toChange.valorFloat = Float.parseFloat(value);
+        else if(toChange.tipo.equals("bool"))
+             toChange.valorBool =  Boolean.parseBoolean(value);
+        else if(toChange.tipo.equals("char"))
+             toChange.valorChar = value.charAt(0);     
     }
 
     private String printVarValue(String varname)
@@ -88,16 +102,37 @@ grammar experiment;
         else if(toRead.tipo.equals("bool"))
             toRead.valorBool = in.nextBoolean();
         else if(toRead.tipo.equals("char"))
-            toRead.valorChar = in.next().charAt(0);          
+            toRead.valorChar = in.next().charAt(0);     
+    }
 
+    private void initCode()
+    {
+        System.out.println("public class Main {");
+        System.out.println("public static void main(String[] args) {");
+    }
 
+    private void printVarInit()
+    {
+        System.out.println("Criacao de var aq");
+    }
+
+    private void endCode()
+    {
+        System.out.println("}");
+        System.out.println("}");
     }
 }
 
 //Every line basics
-program : (NEWLINE? statement ENDLINE)+ EOF ;
+program : {initCode();} (NEWLINE? statement ENDLINE)+  EOF {endCode();} ;
 
-statement : (startIFExpr | startWhileExpr | startDoWhileExpr | startLogExpr | startReadExpr | let ) ;
+statement : (startIFExpr 
+| startWhileExpr 
+ | startDoWhileExpr 
+ | startLogExpr 
+ | startReadExpr 
+ | let {printVarInit(); }
+ | att ) ;
 
 //var init
 let returns [String type]
@@ -108,6 +143,13 @@ let returns [String type]
      | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; } 
      | startExpr) 
     ;
+
+att: VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");}  
+'=' (BOOL {changeValue($VARNAME.text, $BOOL.text);}
+| INT {changeValue($VARNAME.text, $INT.text);}
+| CHAR {changeValue($VARNAME.text, $CHAR.text);}
+| FLOAT {changeValue($VARNAME.text, $FLOAT.text);}
+| startExpr) ;
 
 //Base if expresion
 startIFExpr : IF '(' (ifExpr)+ ')' NEWLINE statement (NEWLINE ELSE NEWLINE statement)? ;
