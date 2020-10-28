@@ -1,4 +1,4 @@
-grammar experiment;	
+grammar experiment;
 
 @header { 
     import java.util.ArrayList;
@@ -124,95 +124,126 @@ grammar experiment;
 }
 
 //Every line basics
-program : {initCode();} (NEWLINE? statement ENDLINE)+  EOF {endCode();} ;
+program:
+	{initCode();} (NEWLINE? statement ENDLINE)+ EOF {endCode();};
 
-statement : (startIFExpr 
-| startWhileExpr 
- | startDoWhileExpr 
- | startLogExpr 
- | startReadExpr 
- | let {printVarInit(); }
- | att ) ;
+statement: (
+		startIFExpr
+		| startWhileExpr
+		| startDoWhileExpr
+		| startLogExpr
+		| startReadExpr
+		| let {printVarInit(); }
+		| att
+	);
 
 //var init
-let returns [String type]
-    : VAR VARNAME {if(variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " ja foi declarada!");}
-     '=' (BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "bool";} 
-     | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; } 
-     | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; } 
-     | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; } 
-     | startExpr) 
-    ;
+let
+	returns[String type]:
+	VAR VARNAME {if(variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " ja foi declarada!");
+		} '=' (
+		BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "bool";
+			}
+		| INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; 
+			}
+		| CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; 
+			}
+		| FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; 
+			}
+		| startExpr
+	);
 
-att: VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");}  
-'=' (BOOL {changeValue($VARNAME.text, $BOOL.text);}
-| INT {changeValue($VARNAME.text, $INT.text);}
-| CHAR {changeValue($VARNAME.text, $CHAR.text);}
-| FLOAT {changeValue($VARNAME.text, $FLOAT.text);}
-| startExpr) ;
+att:
+	VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");
+		} '=' (
+		BOOL {changeValue($VARNAME.text, $BOOL.text);}
+		| INT {changeValue($VARNAME.text, $INT.text);}
+		| CHAR {changeValue($VARNAME.text, $CHAR.text);}
+		| FLOAT {changeValue($VARNAME.text, $FLOAT.text);}
+		| startExpr
+	);
 
 //Base if expresion
-startIFExpr : IF '(' (ifExpr)+ ')' NEWLINE statement (NEWLINE ELSE NEWLINE statement)? ;
+startIFExpr:
+	IF '(' (ifExpr)+ ')' NEWLINE statement (
+		NEWLINE ELSE NEWLINE statement
+	)?;
 
 //Num condition or BOOL
-ifExpr : BOOL |
-startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT) (((AND | OR) startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT))* ) 
- ;
+ifExpr:
+	BOOL
+	| startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (
+		INT {}
+		| FLOAT
+	) (
+		(
+			(AND | OR) startExpr (
+				EQ
+				| NEQ
+				| GTEQ
+				| LTEQ
+				| LT
+				| GT
+			) (INT | FLOAT)
+		)*
+	);
 
-startWhileExpr : WHILE '(' (ifExpr)+ ')' NEWLINE statement ;
+startWhileExpr: WHILE '(' (ifExpr)+ ')' NEWLINE statement;
 
-startDoWhileExpr : DO statement WHILE '(' (ifExpr)+ ')' ;
+startDoWhileExpr: DO statement WHILE '(' (ifExpr)+ ')';
 
-startLogExpr : LOG '(' (STRING { System.out.println($STRING.text); } | VARNAME { System.out.println(printVarValue($VARNAME.text)); } ) ')' ;
+startLogExpr:
+	LOG '(' (
+		STRING { System.out.println($STRING.text); }
+		| VARNAME { System.out.println(printVarValue($VARNAME.text)); }
+	) ')';
 
-startReadExpr : READ '(' VARNAME ')' { readVar($VARNAME.text); } ;
+startReadExpr: READ '(' VARNAME ')' { readVar($VARNAME.text); };
 
 //Base expresion
-startExpr :	(expr)* ;
+startExpr: (expr)*;
 
-expr returns [String type] 
-    :	expr ('*'|'/') expr
-    |	expr ('+'|'-') expr
-    |	INT | FLOAT | VARNAME
-    |	'(' expr ')'
-    ;
+expr
+	returns[String type]:
+	expr ('*' | '/') expr
+	| expr ('+' | '-') expr
+	| INT
+	| FLOAT
+	| VARNAME
+	| '(' expr ')';
 
-	
-VAR		: 'var' ;
-IF		: 'if' ;
-ELSE	: 'else' ;
-WHILE	: 'while' ;
-DO		: 'do' ;
+VAR: 'var';
+IF: 'if';
+ELSE: 'else';
+WHILE: 'while';
+DO: 'do';
 //Print screen
-LOG 	: 'log' ;
+LOG: 'log';
 //Read input
-READ	: 'read' ;
+READ: 'read';
 
-OR 		: '||' ;
-AND 	: '&&' ;
-EQ 		: '==' ;
-NEQ 	: '!=' ;
-GT 		: '>' ;
-LT 		: '<' ;
-GTEQ 	: '>=' ;
-LTEQ 	: '<=' ;
-	
-BOOL : ('true' | 'false') ;
+OR: '||';
+AND: '&&';
+EQ: '==';
+NEQ: '!=';
+GT: '>';
+LT: '<';
+GTEQ: '>=';
+LTEQ: '<=';
 
+BOOL: ('true' | 'false');
 
-ENDLINE : ';' ;
-NEWLINE : [\r\n]+ ;	
+ENDLINE: ';';
+NEWLINE: [\r\n]+;
 
 //Vars
-VARNAME : [a-zA-Z]+ ;
-CHAR	: '\u0027'[a-zA-Z]'\u0027' ;
-INT     : [0-9]+ ;
-FLOAT   : INT ('.' INT)? ;
-STRING  : '"' ([a-zA-Z] | WHITESPACE )* '"';
+VARNAME: [a-zA-Z]+;
+CHAR: '\u0027' [a-zA-Z]'\u0027';
+INT: [0-9]+;
+FLOAT: INT ('.' INT)?;
+STRING: '"' ([a-zA-Z] | WHITESPACE)* '"';
 
-WHITESPACE : [ \t\r\n] -> skip ;
+WHITESPACE: [ \t\r\n] -> skip;
 
 //CLASS
-//antlr experiment.g4
-//javac experiment*.java
-//grun experiment program example.txt -gui
+// antlr experiment.g4 javac experiment*.java grun experiment program example.txt -gui
