@@ -1,13 +1,13 @@
 grammar experiment;
 
-@header { 
+@header {
     import java.util.ArrayList;
-    import java.util.HashMap; 
-    import java.util.Map; 
-    import java.util.Scanner; 
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.Scanner;
 }
 
-@members { 
+@members {
     public class Dado
     {
         public String nome, tipo;
@@ -70,7 +70,7 @@ grammar experiment;
         else if(toChange.tipo.equals("bool"))
              toChange.valorBool =  Boolean.parseBoolean(value);
         else if(toChange.tipo.equals("char"))
-             toChange.valorChar = value.charAt(0);     
+             toChange.valorChar = value.charAt(0);
     }
 
     private String printVarValue(String varname)
@@ -102,7 +102,7 @@ grammar experiment;
         else if(toRead.tipo.equals("bool"))
             toRead.valorBool = in.nextBoolean();
         else if(toRead.tipo.equals("char"))
-            toRead.valorChar = in.next().charAt(0);     
+            toRead.valorChar = in.next().charAt(0);
     }
 
     private void initCode()
@@ -111,9 +111,9 @@ grammar experiment;
         System.out.println("public static void main(String[] args) {");
     }
 
-    private void printVarInit()
+    private void printVarInit(String expression)
     {
-        System.out.println("Criacao de var aq");
+        System.out.println(expression);
     }
 
     private void endCode()
@@ -121,129 +121,113 @@ grammar experiment;
         System.out.println("}");
         System.out.println("}");
     }
+    private String parseIfString(String condition, String statement){
+        String completeIf = "if("+condition+"){"+statement+"}";
+        return completeIf;
+    }
+    private String parseWhileString(String condition, String statement){
+        String whileString = "while("+condition+"){"+statement+"}";
+        return whileString;
+    }
+    private String parseDoWhileString(String condition, String statement){
+        String doWhileString = "do{"+statement+"}"+"while("+condition+")";
+        return doWhileString;
+    }
 }
 
 //Every line basics
-program:
-	{initCode();} (NEWLINE? statement ENDLINE)+ EOF {endCode();};
+program : {initCode();} (NEWLINE? statement {System.out.print($statement.statementString);} ENDLINE)+  EOF {endCode();} ;
 
-statement: (
-		startIFExpr
-		| startWhileExpr
-		| startDoWhileExpr
-		| startLogExpr
-		| startReadExpr
-		| let {printVarInit(); }
-		| att
-	);
+statement returns [String statementString]
+: (startIFExpr{$statementString = $startIFExpr.completeIfExpression;}
+| startWhileExpr{$statementString = $startWhileExpr.whileStatement;}
+ | startDoWhileExpr{$statementString = $startDoWhileExpr.doWhileStatement;}
+ | startLogExpr//{$statementString = }
+ | startReadExpr//{$statementString = }
+ | let {$statementString = $let.type;}// to be functional this needs to pass through a statement and not a type
+ | att);
+
 
 //var init
-let
-	returns[String type]:
-	VAR VARNAME {if(variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " ja foi declarada!");
-		} '=' (
-		BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "bool";
-			}
-		| INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; 
-			}
-		| CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; 
-			}
-		| FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; 
-			}
-		| startExpr
-	);
+let returns [String type]
+    : VAR VARNAME {if(variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " ja foi declarada!");}
+     '=' (BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "bool";}
+     | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; }
+     | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; }
+     | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; }
+     | startExpr)
+    ;
 
-att:
-	VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");
-		} '=' (
-		BOOL {changeValue($VARNAME.text, $BOOL.text);}
-		| INT {changeValue($VARNAME.text, $INT.text);}
-		| CHAR {changeValue($VARNAME.text, $CHAR.text);}
-		| FLOAT {changeValue($VARNAME.text, $FLOAT.text);}
-		| startExpr
-	);
+att: VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");}
+'=' (BOOL {changeValue($VARNAME.text, $BOOL.text);}
+| INT {changeValue($VARNAME.text, $INT.text);}
+| CHAR {changeValue($VARNAME.text, $CHAR.text);}
+| FLOAT {changeValue($VARNAME.text, $FLOAT.text);}
+| startExpr) ;
 
-//Base if expresion
-startIFExpr:
-	IF '(' (ifExpr)+ ')' NEWLINE statement (
-		NEWLINE ELSE NEWLINE statement
-	)?;
+//Base if expression
+// else currently not working
+startIFExpr returns [String completeIfExpression] : IF '(' (ifExpr)+ ')' NEWLINE statement (NEWLINE ELSE NEWLINE statement)? {$completeIfExpression = parseIfString($ifExpr.condition,$statement.statementString);};
 
 //Num condition or BOOL
-ifExpr:
-	BOOL
-	| startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (
-		INT {}
-		| FLOAT
-	) (
-		(
-			(AND | OR) startExpr (
-				EQ
-				| NEQ
-				| GTEQ
-				| LTEQ
-				| LT
-				| GT
-			) (INT | FLOAT)
-		)*
-	);
+ifExpr returns[String condition] : BOOL{$condition = $BOOL.text;} |
+startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT) (((AND | OR) startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT))* )// Needs to send actual symbols up to the parser, currently only sends true or false works
+ ;
 
-startWhileExpr: WHILE '(' (ifExpr)+ ')' NEWLINE statement;
+startWhileExpr returns [String whileStatement] : WHILE '(' (ifExpr)+ ')' NEWLINE statement {$whileStatement = parseWhileString($ifExpr.condition,$statement.statementString);};
 
-startDoWhileExpr: DO statement WHILE '(' (ifExpr)+ ')';
+startDoWhileExpr returns [String doWhileStatement] : DO statement WHILE '(' (ifExpr)+ ')' {$doWhileStatement = parseDoWhileString($ifExpr.condition,$statement.statementString);};
 
-startLogExpr:
-	LOG '(' (
-		STRING { System.out.println($STRING.text); }
-		| VARNAME { System.out.println(printVarValue($VARNAME.text)); }
-	) ')';
+startLogExpr : LOG '(' (STRING { System.out.println($STRING.text); } | VARNAME { System.out.println(printVarValue($VARNAME.text)); } ) ')' ;
 
-startReadExpr: READ '(' VARNAME ')' { readVar($VARNAME.text); };
+startReadExpr : READ '(' VARNAME ')' { readVar($VARNAME.text); } ;
 
 //Base expresion
-startExpr: (expr)*;
+startExpr :	(expr)* ;
 
-expr
-	returns[String type]:
-	expr ('*' | '/') expr
-	| expr ('+' | '-') expr
-	| INT
-	| FLOAT
-	| VARNAME
-	| '(' expr ')';
+expr returns [String type]
+    :	expr ('*'|'/') expr
+    |	expr ('+'|'-') expr
+    |	INT | FLOAT | VARNAME
+    |	'(' expr ')'
+    ;
 
-VAR: 'var';
-IF: 'if';
-ELSE: 'else';
-WHILE: 'while';
-DO: 'do';
+
+VAR		: 'var' ;
+IF		: 'if' ;
+ELSE	: 'else' ;
+WHILE	: 'while' ;
+DO		: 'do' ;
 //Print screen
-LOG: 'log';
+LOG 	: 'log' ;
 //Read input
-READ: 'read';
+READ	: 'read' ;
 
-OR: '||';
-AND: '&&';
-EQ: '==';
-NEQ: '!=';
-GT: '>';
-LT: '<';
-GTEQ: '>=';
-LTEQ: '<=';
+OR 		: '||' ;
+AND 	: '&&' ;
+EQ 		: '==' ;
+NEQ 	: '!=' ;
+GT 		: '>' ;
+LT 		: '<' ;
+GTEQ 	: '>=' ;
+LTEQ 	: '<=' ;
 
-BOOL: ('true' | 'false');
+BOOL : ('true' | 'false') ;
 
-ENDLINE: ';';
-NEWLINE: [\r\n]+;
+
+ENDLINE : ';' ;
+NEWLINE : [\r\n]+ ;
 
 //Vars
-VARNAME: [a-zA-Z]+;
-CHAR: '\u0027' [a-zA-Z]'\u0027';
-INT: [0-9]+;
-FLOAT: INT ('.' INT)?;
-STRING: '"' ([a-zA-Z] | WHITESPACE)* '"';
+VARNAME : [a-zA-Z]+ ;
+CHAR	: '\u0027'[a-zA-Z]'\u0027' ;
+INT     : [0-9]+ ;
+FLOAT   : INT ('.' INT)? ;
+STRING  : '"' ([a-zA-Z] | WHITESPACE )* '"';
 
-WHITESPACE: [ \t\r\n] -> skip;
+WHITESPACE : [ \t\r\n] -> skip ;
 
 //CLASS
-// antlr experiment.g4 javac experiment*.java grun experiment program example.txt -gui
+//antlr experiment.g4
+//javac experiment*.java
+//grun experiment program example.txt -gui
