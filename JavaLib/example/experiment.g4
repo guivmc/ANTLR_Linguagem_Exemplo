@@ -111,11 +111,6 @@ grammar experiment;
         System.out.println("public static void main(String[] args) {");
     }
 
-    private void printVarInit(String expression)
-    {
-        System.out.println(expression);
-    }
-
     private void endCode()
     {
         System.out.println("}");
@@ -133,6 +128,10 @@ grammar experiment;
         String doWhileString = "do{"+statement+"}"+"while("+condition+")";
         return doWhileString;
     }
+    private String parseLogString(String logMessage){
+            String  parsedLogMessage = "System.out.println(\"+logMessage+"\")";
+            return parsedLogMessage;
+    }
 }
 
 //Every line basics
@@ -142,7 +141,7 @@ statement returns [String statementString]
 : (startIFExpr{$statementString = $startIFExpr.completeIfExpression;}
 | startWhileExpr{$statementString = $startWhileExpr.whileStatement;}
  | startDoWhileExpr{$statementString = $startDoWhileExpr.doWhileStatement;}
- | startLogExpr//{$statementString = }
+ | startLogExpr//{$statementString = $startLogExpr.logStatement;}
  | startReadExpr//{$statementString = }
  | let {$statementString = $let.type;}// to be functional this needs to pass through a statement and not a type
  | att);
@@ -178,7 +177,7 @@ startWhileExpr returns [String whileStatement] : WHILE '(' (ifExpr)+ ')' NEWLINE
 
 startDoWhileExpr returns [String doWhileStatement] : DO statement WHILE '(' (ifExpr)+ ')' {$doWhileStatement = parseDoWhileString($ifExpr.condition,$statement.statementString);};
 
-startLogExpr : LOG '(' (STRING { System.out.println($STRING.text); } | VARNAME { System.out.println(printVarValue($VARNAME.text)); } ) ')' ;
+startLogExpr returns [String logStatement] : LOG '(' (STRING { $logStatement = parseLogString($STRING.text); } | VARNAME { $logStatement = parseLogString(printVarValue($VARNAME.text)); } ) ')' ;
 
 startReadExpr : READ '(' VARNAME ')' { readVar($VARNAME.text); } ;
 
