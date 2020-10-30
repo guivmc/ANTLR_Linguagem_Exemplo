@@ -104,9 +104,9 @@ grammar experiment;
         else if(toRead.tipo.equals("char"))
             toRead.valorChar = in.next().charAt(0);
     }
-
     private void initCode()
     {
+        System.out.println("import java.util.Scanner;");
         System.out.println("public class Main {");
         System.out.println("public static void main(String[] args) {");
     }
