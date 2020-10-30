@@ -125,22 +125,24 @@ grammar experiment;
         return whileString;
     }
     private String parseDoWhileString(String condition, String statement){
-        String doWhileString = "do{"+statement+"}"+"while("+condition+")";
+        String doWhileString = "do{"+statement+"}"+"while("+condition+");";
         return doWhileString;
     }
     private String parseLogString(String logMessage){
-        String  parsedLogMessage = "System.out.println(\"+logMessage+"\");";
+        char doubleQuote ='"';
+        String  parsedLogMessage = "System.out.println("+doubleQuote+logMessage+doubleQuote+");";
         return parsedLogMessage;
     }
     private String parseDeclarationString(String varName,String content,String type){
+        char doubleQuote ='"';
         if(type.equals("char")){
-            String parsedVariableDeclarationString = type+" "+varname+" = '"+content+"';";
+            String parsedVariableDeclarationString = type+" "+varName+" = "+"'"+content+"'"+";";
             return parsedVariableDeclarationString;
-        }else if(type.equals("String"){
-            String parsedVariableDeclarationString = type+" "+varname+" = \""+content+"\";";
+        }else if(type.equals("String")){
+            String parsedVariableDeclarationString = type+" "+varName+" = "+doubleQuote+content+doubleQuote+";";
             return parsedVariableDeclarationString;
         }else{
-            String parsedVariableDeclarationString = type+" "+varname+" = "+content+";";
+            String parsedVariableDeclarationString = type+" "+varName+" = "+content+";";
             return parsedVariableDeclarationString;
         }
     }
