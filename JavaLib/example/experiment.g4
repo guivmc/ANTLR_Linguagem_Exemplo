@@ -129,8 +129,20 @@ grammar experiment;
         return doWhileString;
     }
     private String parseLogString(String logMessage){
-            String  parsedLogMessage = "System.out.println(\"+logMessage+"\")";
-            return parsedLogMessage;
+        String  parsedLogMessage = "System.out.println(\"+logMessage+"\");";
+        return parsedLogMessage;
+    }
+    private String parseDeclarationString(String varName,String content,String type){
+        if(type.equals("char")){
+            String parsedVariableDeclarationString = type+" "+varname+" = '"+content+"';";
+            return parsedVariableDeclarationString;
+        }else if(type.equals("String"){
+            String parsedVariableDeclarationString = type+" "+varname+" = \""+content+"\";";
+            return parsedVariableDeclarationString;
+        }else{
+            String parsedVariableDeclarationString = type+" "+varname+" = "+content+";";
+            return parsedVariableDeclarationString;
+        }
     }
 }
 
@@ -141,19 +153,19 @@ statement returns [String statementString]
 : (startIFExpr{$statementString = $startIFExpr.completeIfExpression;}
 | startWhileExpr{$statementString = $startWhileExpr.whileStatement;}
  | startDoWhileExpr{$statementString = $startDoWhileExpr.doWhileStatement;}
- | startLogExpr//{$statementString = $startLogExpr.logStatement;}
+ | startLogExpr{$statementString = $startLogExpr.logStatement;}
  | startReadExpr//{$statementString = }
- | let {$statementString = $let.type;}// to be functional this needs to pass through a statement and not a type
+ | let {$statementString = $let.declarationString;}
  | att);
 
 
 //var init
-let returns [String type]
+let returns [String type,String declarationString]
     : VAR VARNAME {if(variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " ja foi declarada!");}
-     '=' (BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "bool";}
-     | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; }
-     | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; }
-     | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; }
+     '=' (BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "boolean";$declarationString = parseDeclarationString($VARNAME.text,$BOOL.text,$type);}
+     | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; $declarationString = parseDeclarationString($VARNAME.text,$INT.text,$type);}
+     | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; $declarationString = parseDeclarationString($VARNAME.text,$CHAR.text,$type);}
+     | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; $declarationString = parseDeclarationString($VARNAME.text,$FLOAT.text,$type);}
      | startExpr)
     ;
 
