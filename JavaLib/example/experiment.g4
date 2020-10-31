@@ -11,15 +11,10 @@ grammar experiment;
     public class Dado
     {
         public String nome, tipo;
-
         public int valorInt;
-
         public float valorFloat;
-
         public char valorChar;
-
         public boolean valorBool;
-
         public Dado(String nome, int valorInt)
         {
             this.nome = nome;
@@ -62,7 +57,6 @@ grammar experiment;
     private void changeValue(String varname, String value)
     {
         Dado toChange = this.variaveis.get(varname);
-
         if(toChange.tipo.equals("int"))
             toChange.valorInt = Integer.parseInt(value);
         else if(toChange.tipo.equals("float"))
@@ -76,7 +70,6 @@ grammar experiment;
     private String printVarValue(String varname)
     {
         Dado toPrint = this.variaveis.get(varname);
-
         if(toPrint.tipo.equals("int"))
             return toPrint.valorInt + "";
         else if(toPrint.tipo.equals("float"))
@@ -85,16 +78,13 @@ grammar experiment;
             return toPrint.valorBool + "";
         else if(toPrint.tipo.equals("char"))
             return toPrint.valorChar + "";
-
         return null;
     }
 
     private void readVar(String varname)
     {
         Dado toRead = this.variaveis.get(varname);
-
         Scanner in = new Scanner(System.in);
-
         if(toRead.tipo.equals("int"))
             toRead.valorInt = in.nextInt();
         else if(toRead.tipo.equals("float"))
@@ -106,7 +96,10 @@ grammar experiment;
     }
     private void initCode()
     {
+        System.out.println("Guilherme Carvalhal (211002514)");
+        System.out.println("Guilherme Carvalho Lucas (20311639)");
         System.out.println("import java.util.Scanner;");
+        System.out.println("static Scanner in = new Scanner(System.in);");
         System.out.println("public class Main {");
         System.out.println("public static void main(String[] args) {");
     }
@@ -116,8 +109,8 @@ grammar experiment;
         System.out.println("}");
         System.out.println("}");
     }
-    private String parseIfString(String condition, String statement){
-        String completeIf = "if("+condition+"){"+statement+"}";
+    private String parseIfString(String condition){
+        String completeIf = "if("+condition+"){" ;
         return completeIf;
     }
     private String parseWhileString(String condition, String statement){
@@ -130,62 +123,92 @@ grammar experiment;
     }
     private String parseLogString(String logMessage){
         char doubleQuote ='"';
-        String  parsedLogMessage = "System.out.println("+doubleQuote+logMessage+doubleQuote+");";
+        String  parsedLogMessage = "System.out.println(" + logMessage + ");";
         return parsedLogMessage;
     }
     private String parseDeclarationString(String varName,String content,String type){
         char doubleQuote ='"';
         if(type.equals("char")){
-            String parsedVariableDeclarationString = type+" "+varName+" = "+"'"+content+"'"+";";
+            String parsedVariableDeclarationString = type+" "+varName+" = " + content + ";";
             return parsedVariableDeclarationString;
         }else if(type.equals("String")){
-            String parsedVariableDeclarationString = type+" "+varName+" = "+doubleQuote+content+doubleQuote+";";
+            String parsedVariableDeclarationString = type+" "+varName+" = "+ content +";";
             return parsedVariableDeclarationString;
         }else{
             String parsedVariableDeclarationString = type+" "+varName+" = "+content+";";
             return parsedVariableDeclarationString;
         }
     }
+
+    private String parseReadDeclaration(String varname)
+    {
+        String declaration = varname + " = ";
+
+        Dado toRead = this.variaveis.get(varname);
+
+        if(toRead.tipo.equals("int"))
+            declaration += "in.nextInt();";
+        else if(toRead.tipo.equals("float"))
+            declaration += "in.nextFloat();";
+        else if(toRead.tipo.equals("bool"))
+            declaration += "in.nextBoolean();";
+        else if(toRead.tipo.equals("char"))
+            declaration += "in.next().charAt(0);";
+
+        return declaration;
+    }
+
+    private String parseVarToBool(String varname)
+    {
+        if (this.variaveis.get(varname).tipo.equals("bool"))
+            return varname;
+        else
+            throw new IllegalArgumentException("Variavel " + varname + " nao eh bool!");
+    }
 }
 
 //Every line basics
-program : {initCode();} (NEWLINE? statement {System.out.print($statement.statementString);} ENDLINE)+  EOF {endCode();} ;
+program : {initCode();} (NEWLINE? statement {System.out.print($statement.statementString + "\n");} ENDLINE)+  EOF {endCode();} ;
 
 statement returns [String statementString]
 : (startIFExpr{$statementString = $startIFExpr.completeIfExpression;}
 | startWhileExpr{$statementString = $startWhileExpr.whileStatement;}
  | startDoWhileExpr{$statementString = $startDoWhileExpr.doWhileStatement;}
  | startLogExpr{$statementString = $startLogExpr.logStatement;}
- | startReadExpr//{$statementString = }
+ | startReadExpr { $statementString = $startReadExpr.readStatement;}
  | let {$statementString = $let.declarationString;}
- | att);
+ | att {$statementString = $att.declarationString + ";";});
 
 
 //var init
-let returns [String type,String declarationString]
+let returns [String type, String declarationString]
     : VAR VARNAME {if(variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " ja foi declarada!");}
      '=' (BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "boolean";$declarationString = parseDeclarationString($VARNAME.text,$BOOL.text,$type);}
      | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; $declarationString = parseDeclarationString($VARNAME.text,$INT.text,$type);}
      | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; $declarationString = parseDeclarationString($VARNAME.text,$CHAR.text,$type);}
      | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; $declarationString = parseDeclarationString($VARNAME.text,$FLOAT.text,$type);}
-     | startExpr)
+     | startExpr {$declarationString = $startExpr.text;})
     ;
 
-att: VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");}
-'=' (BOOL {changeValue($VARNAME.text, $BOOL.text);}
-| INT {changeValue($VARNAME.text, $INT.text);}
-| CHAR {changeValue($VARNAME.text, $CHAR.text);}
-| FLOAT {changeValue($VARNAME.text, $FLOAT.text);}
-| startExpr) ;
+att returns  [String type, String declarationString]
+    : VARNAME {if(!variableDefined($VARNAME.text)) throw new IllegalArgumentException("Variavel " + $VARNAME.text+ " nao foi declarada!");}
+    '=' (BOOL {changeValue($VARNAME.text, $BOOL.text); $declarationString = $VARNAME.text + " = " +  $BOOL.text; }
+    | INT {changeValue($VARNAME.text, $INT.text);  $declarationString = $VARNAME.text + " = " +  $INT.text; }
+    | CHAR {changeValue($VARNAME.text, $CHAR.text);  $declarationString = $VARNAME.text + " = " +  $CHAR.text; }
+    | FLOAT {changeValue($VARNAME.text, $FLOAT.text);  $declarationString = $VARNAME.text + " = " +  $FLOAT.text; }
+    | startExpr) 
+    ;
 
 //Base if expression
 // else currently not working
-startIFExpr returns [String completeIfExpression] : IF '(' (ifExpr)+ ')' NEWLINE statement (NEWLINE ELSE NEWLINE statement)? {$completeIfExpression = parseIfString($ifExpr.condition,$statement.statementString);};
+startIFExpr returns [String completeIfExpression] : IF '(' (ifExpr)+ ')' {$completeIfExpression = parseIfString($ifExpr.condition);} '{' (NEWLINE statement {$completeIfExpression += "\n" + $statement.statementString;} ENDLINE NEWLINE)+ '}' {$completeIfExpression += "\n}";}
+ (NEWLINE ELSE {$completeIfExpression += "else {"; } '{' (NEWLINE statement {$completeIfExpression += "\n" + $statement.statementString;} ENDLINE NEWLINE)+ '}' {$completeIfExpression += "\n}";})? ;
 
 //Num condition or BOOL
-ifExpr returns[String condition] : BOOL{$condition = $BOOL.text;} |
-startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT) (((AND | OR) startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT))* )// Needs to send actual symbols up to the parser, currently only sends true or false works
- ;
+ifExpr returns[String condition] : BOOL{$condition = $BOOL.text;} | boolExpr {$condition = $boolExpr.text;} | VARNAME {$condition = parseVarToBool($VARNAME.text);} ;
+
+//Aqui da ruim :C 
+boolExpr : startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT) ((AND | OR)  BOOL | VARNAME {parseVarToBool($VARNAME.text);} | (startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT))* );
 
 startWhileExpr returns [String whileStatement] : WHILE '(' (ifExpr)+ ')' NEWLINE statement {$whileStatement = parseWhileString($ifExpr.condition,$statement.statementString);};
 
@@ -193,7 +216,7 @@ startDoWhileExpr returns [String doWhileStatement] : DO statement WHILE '(' (ifE
 
 startLogExpr returns [String logStatement] : LOG '(' (STRING { $logStatement = parseLogString($STRING.text); } | VARNAME { $logStatement = parseLogString(printVarValue($VARNAME.text)); } ) ')' ;
 
-startReadExpr : READ '(' VARNAME ')' { readVar($VARNAME.text); } ;
+startReadExpr returns [String readStatement] : READ '(' VARNAME ')' { $readStatement = parseReadDeclaration($VARNAME.text); } ;
 
 //Base expresion
 startExpr :	(expr)* ;

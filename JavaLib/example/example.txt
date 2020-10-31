@@ -1,3 +1,16 @@
 var a = 0;
+a = 1;
 read(a);
-log(a);
+if (false) {
+log("if com bool");
+};
+var b = true;
+if (b){
+log("if com var");
+}
+else {
+log("if com else");
+};
+if(1 < 0){
+log("if com expressao");
+};
