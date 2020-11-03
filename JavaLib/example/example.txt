@@ -1,5 +1,5 @@
 var a = 0;
-a = 1;
+a = 1
 read(a);
 if (false) {
 log("if com bool");
@@ -13,4 +13,13 @@ log("if com else");
 };
 if(1 < 0){
 log("if com expressao");
+log("if com expressao");
 };
+while(b){
+log("while");
+log("while");
+};
+do{
+log("do while");
+log("do while");
+}while(b);

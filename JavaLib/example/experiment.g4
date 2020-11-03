@@ -99,9 +99,10 @@ grammar experiment;
         System.out.println("Guilherme Carvalhal (211002514)");
         System.out.println("Guilherme Carvalho Lucas (20311639)");
         System.out.println("import java.util.Scanner;");
-        System.out.println("static Scanner in = new Scanner(System.in);");
+       
         System.out.println("public class Main {");
         System.out.println("public static void main(String[] args) {");
+        System.out.println("Scanner in = new Scanner(System.in);");
     }
 
     private void endCode()
@@ -113,12 +114,12 @@ grammar experiment;
         String completeIf = "if("+condition+"){" ;
         return completeIf;
     }
-    private String parseWhileString(String condition, String statement){
-        String whileString = "while("+condition+"){"+statement+"}";
+    private String parseWhileString(String condition){
+        String whileString = "while("+condition+"){";
         return whileString;
     }
-    private String parseDoWhileString(String condition, String statement){
-        String doWhileString = "do{"+statement+"}"+"while("+condition+");";
+    private String parseDoWhileString(String condition){
+        String doWhileString = "} while("+condition+");";
         return doWhileString;
     }
     private String parseLogString(String logMessage){
@@ -201,7 +202,7 @@ att returns  [String type, String declarationString]
 
 //Base if expression
 // else currently not working
-startIFExpr returns [String completeIfExpression] : IF '(' (ifExpr)+ ')' {$completeIfExpression = parseIfString($ifExpr.condition);} '{' (NEWLINE statement {$completeIfExpression += "\n" + $statement.statementString;} ENDLINE NEWLINE)+ '}' {$completeIfExpression += "\n}";}
+startIFExpr returns [String completeIfExpression] : IF '(' (ifExpr)+ ')' {$completeIfExpression = parseIfString($ifExpr.condition);} '{' (NEWLINE statement {$completeIfExpression += "\n" + $statement.statementString;} ENDLINE )+ NEWLINE '}' {$completeIfExpression += "\n}";}
  (NEWLINE ELSE {$completeIfExpression += "else {"; } '{' (NEWLINE statement {$completeIfExpression += "\n" + $statement.statementString;} ENDLINE NEWLINE)+ '}' {$completeIfExpression += "\n}";})? ;
 
 //Num condition or BOOL
@@ -210,9 +211,9 @@ ifExpr returns[String condition] : BOOL{$condition = $BOOL.text;} | boolExpr {$c
 //Aqui da ruim :C 
 boolExpr : startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT) ((AND | OR)  BOOL | VARNAME {parseVarToBool($VARNAME.text);} | (startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT))* );
 
-startWhileExpr returns [String whileStatement] : WHILE '(' (ifExpr)+ ')' NEWLINE statement {$whileStatement = parseWhileString($ifExpr.condition,$statement.statementString);};
+startWhileExpr returns [String whileStatement] : WHILE '(' (ifExpr)+ ')'  {$whileStatement = parseWhileString($ifExpr.condition);} '{' (NEWLINE statement {$whileStatement += "\n" + $statement.statementString; } ENDLINE)+ NEWLINE '}' {$whileStatement += "\n}";};
 
-startDoWhileExpr returns [String doWhileStatement] : DO statement WHILE '(' (ifExpr)+ ')' {$doWhileStatement = parseDoWhileString($ifExpr.condition,$statement.statementString);};
+startDoWhileExpr returns [String doWhileStatement] : DO '{'  {$doWhileStatement = "do {";} (NEWLINE statement {$doWhileStatement += "\n" + $statement.statementString; } ENDLINE)+ NEWLINE '}' WHILE '(' (ifExpr)+ ')' {$doWhileStatement += parseDoWhileString($ifExpr.condition); };
 
 startLogExpr returns [String logStatement] : LOG '(' (STRING { $logStatement = parseLogString($STRING.text); } | VARNAME { $logStatement = parseLogString(printVarValue($VARNAME.text)); } ) ')' ;
 
