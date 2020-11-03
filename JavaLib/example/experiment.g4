@@ -187,7 +187,7 @@ let returns [String type, String declarationString]
      '=' (BOOL { defineVariable($VARNAME.text, new Dado($VARNAME.text, Boolean.parseBoolean($BOOL.text))); $type = "boolean";$declarationString = parseDeclarationString($VARNAME.text,$BOOL.text,$type);}
      | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; $declarationString = parseDeclarationString($VARNAME.text,$INT.text,$type);}
      | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; $declarationString = parseDeclarationString($VARNAME.text,$CHAR.text,$type);}
-     | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; $declarationString = parseDeclarationString($VARNAME.text,$FLOAT.text,$type);}
+     | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "double"; $declarationString = parseDeclarationString($VARNAME.text,$FLOAT.text,$type);}
      | startExpr {defineVariable($VARNAME.text, new Dado($VARNAME.text, 0)); $type = "int"; $declarationString = $startExpr.text;})
     ;
 
