@@ -188,7 +188,7 @@ let returns [String type, String declarationString]
      | INT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Integer.parseInt($INT.text))); $type = "int"; $declarationString = parseDeclarationString($VARNAME.text,$INT.text,$type);}
      | CHAR { defineVariable($VARNAME.text, new Dado($VARNAME.text, $CHAR.text.charAt(0))); $type = "char"; $declarationString = parseDeclarationString($VARNAME.text,$CHAR.text,$type);}
      | FLOAT { defineVariable($VARNAME.text, new Dado($VARNAME.text, Float.parseFloat($FLOAT.text))); $type = "float"; $declarationString = parseDeclarationString($VARNAME.text,$FLOAT.text,$type);}
-     | startExpr {$declarationString = $startExpr.text;})
+     | startExpr {defineVariable($VARNAME.text, new Dado($VARNAME.text, 0)); $type = "int"; $declarationString = $startExpr.text;})
     ;
 
 att returns  [String type, String declarationString]
@@ -197,7 +197,7 @@ att returns  [String type, String declarationString]
     | INT {changeValue($VARNAME.text, $INT.text);  $declarationString = $VARNAME.text + " = " +  $INT.text; }
     | CHAR {changeValue($VARNAME.text, $CHAR.text);  $declarationString = $VARNAME.text + " = " +  $CHAR.text; }
     | FLOAT {changeValue($VARNAME.text, $FLOAT.text);  $declarationString = $VARNAME.text + " = " +  $FLOAT.text; }
-    | startExpr) 
+    | startExpr  {changeValue($VARNAME.text, "0"); $declarationString = $VARNAME.text + " = " +  $startExpr.text;} ) 
     ;
 
 //Base if expression
@@ -209,13 +209,13 @@ startIFExpr returns [String completeIfExpression] : IF '(' (ifExpr)+ ')' {$compl
 ifExpr returns[String condition] : BOOL{$condition = $BOOL.text;} | boolExpr {$condition = $boolExpr.text;} | VARNAME {$condition = parseVarToBool($VARNAME.text);} ;
 
 //Aqui da ruim :C 
-boolExpr : startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT) ((AND | OR)  BOOL | VARNAME {parseVarToBool($VARNAME.text);} | (startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT))* );
+boolExpr : startExpr (EQ | NEQ | GTEQ | LTEQ | LT | GT) (INT | FLOAT | VARNAME);
 
 startWhileExpr returns [String whileStatement] : WHILE '(' (ifExpr)+ ')'  {$whileStatement = parseWhileString($ifExpr.condition);} '{' (NEWLINE statement {$whileStatement += "\n" + $statement.statementString; } ENDLINE)+ NEWLINE '}' {$whileStatement += "\n}";};
 
 startDoWhileExpr returns [String doWhileStatement] : DO '{'  {$doWhileStatement = "do {";} (NEWLINE statement {$doWhileStatement += "\n" + $statement.statementString; } ENDLINE)+ NEWLINE '}' WHILE '(' (ifExpr)+ ')' {$doWhileStatement += parseDoWhileString($ifExpr.condition); };
 
-startLogExpr returns [String logStatement] : LOG '(' (STRING { $logStatement = parseLogString($STRING.text); } | VARNAME { $logStatement = parseLogString(printVarValue($VARNAME.text)); } ) ')' ;
+startLogExpr returns [String logStatement] : LOG '(' (STRING { $logStatement = parseLogString($STRING.text); } | VARNAME { $logStatement = parseLogString($VARNAME.text); } ) ')' ;
 
 startReadExpr returns [String readStatement] : READ '(' VARNAME ')' { $readStatement = parseReadDeclaration($VARNAME.text); } ;
 

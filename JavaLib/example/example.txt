@@ -1,25 +1,20 @@
 var a = 0;
-a = 1
+var b = 1;
+var c = 2;
+var d = 1.0;
+log("Programa Teste");
+log("Digite a");
 read(a);
-if (false) {
-log("if com bool");
-};
-var b = true;
-if (b){
-log("if com var");
-}
+log("Digite b");
+read(b);
+if(a<b) {
+c = a + b;
+} 
 else {
-log("if com else");
+c = a - b;
 };
-if(1 < 0){
-log("if com expressao");
-log("if com expressao");
-};
-while(b){
-log("while");
-log("while");
-};
-do{
-log("do while");
-log("do while");
-}while(b);
+log("C e igual a ");
+log(c);
+d = c/(a+b);
+log("D e igual a ");
+log(d);
